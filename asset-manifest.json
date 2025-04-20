@@ -1,19 +1,19 @@
 {
   "files": {
-    "main.css": "/civitai-slideshow/static/css/main.949ed211.css",
-    "main.js": "/civitai-slideshow/static/js/main.bedf370c.js",
-    "static/js/453.6ff19754.chunk.js": "/civitai-slideshow/static/js/453.6ff19754.chunk.js",
-    "static/media/slick.svg": "/civitai-slideshow/static/media/slick.2630a3e3eab21c607e21.svg",
-    "static/media/slick.eot": "/civitai-slideshow/static/media/slick.a4e97f5a2a64f0ab1323.eot",
-    "static/media/slick.ttf": "/civitai-slideshow/static/media/slick.c94f7671dcc99dce43e2.ttf",
-    "static/media/slick.woff": "/civitai-slideshow/static/media/slick.295183786cd8a1389865.woff",
-    "index.html": "/civitai-slideshow/index.html",
-    "main.949ed211.css.map": "/civitai-slideshow/static/css/main.949ed211.css.map",
-    "main.bedf370c.js.map": "/civitai-slideshow/static/js/main.bedf370c.js.map",
-    "453.6ff19754.chunk.js.map": "/civitai-slideshow/static/js/453.6ff19754.chunk.js.map"
+    "main.css": "/civitai-slideslow/static/css/main.48ac9472.css",
+    "main.js": "/civitai-slideslow/static/js/main.c6529125.js",
+    "static/js/453.c1cc23ce.chunk.js": "/civitai-slideslow/static/js/453.c1cc23ce.chunk.js",
+    "static/media/slick.svg": "/civitai-slideslow/static/media/slick.2630a3e3eab21c607e21.svg",
+    "static/media/slick.eot": "/civitai-slideslow/static/media/slick.a4e97f5a2a64f0ab1323.eot",
+    "static/media/slick.ttf": "/civitai-slideslow/static/media/slick.c94f7671dcc99dce43e2.ttf",
+    "static/media/slick.woff": "/civitai-slideslow/static/media/slick.295183786cd8a1389865.woff",
+    "index.html": "/civitai-slideslow/index.html",
+    "main.48ac9472.css.map": "/civitai-slideslow/static/css/main.48ac9472.css.map",
+    "main.c6529125.js.map": "/civitai-slideslow/static/js/main.c6529125.js.map",
+    "453.c1cc23ce.chunk.js.map": "/civitai-slideslow/static/js/453.c1cc23ce.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.949ed211.css",
-    "static/js/main.bedf370c.js"
+    "static/css/main.48ac9472.css",
+    "static/js/main.c6529125.js"
   ]
 }
