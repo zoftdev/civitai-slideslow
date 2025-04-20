@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 
 const ControlPanelContainer = styled.div<{ isVisible: boolean }>`
@@ -217,9 +217,6 @@ interface ControlPanelProps {
   onApplyFilters: () => void;
   isVisible: boolean;
   toggleVisibility: () => void;
-  currentPage: number;
-  totalPages: number;
-  onJumpToPage: (page: number) => void;
 }
 
 const ControlPanel: React.FC<ControlPanelProps> = ({
@@ -237,40 +234,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   setPeriod,
   onApplyFilters,
   isVisible,
-  toggleVisibility,
-  currentPage,
-  totalPages,
-  onJumpToPage
+  toggleVisibility
 }) => {
-  const [pageInput, setPageInput] = useState<string>(currentPage.toString());
-  const [isJumping, setIsJumping] = useState<boolean>(false);
-
-  const handleJumpToPage = () => {
-    const page = parseInt(pageInput);
-    console.log(`Attempting to jump to page ${page}, currentPage: ${currentPage}`);
-    
-    if (!isNaN(page) && page > 0) {
-      setIsJumping(true);
-      console.log('Page validation passed, calling onJumpToPage with:', page);
-      onJumpToPage(page);
-      
-      // Reset the jumping state after some time
-      setTimeout(() => {
-        setIsJumping(false);
-      }, 1500);
-    } else {
-      console.log('Page validation failed', { page, isNaN: isNaN(page) });
-      // Reset input to current page if invalid
-      setPageInput(currentPage.toString());
-    }
-  };
-
-  // Update pageInput when currentPage changes
-  useEffect(() => {
-    setPageInput(currentPage.toString());
-    setIsJumping(false); // Reset jumping state on page change
-  }, [currentPage]);
-
   return (
     <>
       <ToggleButton onClick={toggleVisibility} isVisible={isVisible}>
@@ -333,55 +298,31 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         </ControlGroup>
         
         <ControlGroup>
-          <Label htmlFor="searchTerm">Search Term</Label>
+          <Label htmlFor="searchTerm">Search</Label>
           <Input
             id="searchTerm"
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Enter search keywords"
+            placeholder="Search term..."
           />
         </ControlGroup>
         
         <ControlGroup>
-          <Label htmlFor="delaySeconds">Slide Delay (seconds)</Label>
-          <RangeInput
-            id="delaySeconds"
-            type="range"
+          <Label htmlFor="delay">Slideshow Delay (seconds)</Label>
+          <Input
+            id="delay"
+            type="number"
             min="1"
-            max="15"
-            step="1"
+            max="60"
             value={delaySeconds}
-            onChange={(e) => setDelaySeconds(parseInt(e.target.value))}
+            onChange={(e) => setDelaySeconds(Number(e.target.value))}
           />
-          <RangeValue>{delaySeconds} seconds</RangeValue>
         </ControlGroup>
         
-        <Button onClick={onApplyFilters}>Apply Filters</Button>
-        
-        <Separator />
-        
-        <ControlGroup>
-          <Label>Navigate Pages</Label>
-          <InlineGroup>
-            <NumberInput 
-              type="number" 
-              min="1" 
-              max={totalPages} 
-              value={pageInput}
-              onChange={(e) => setPageInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && !isJumping && handleJumpToPage()}
-              disabled={isJumping}
-            />
-            {isJumping ? (
-              <SmallButtonDisabled disabled>Go</SmallButtonDisabled>
-            ) : (
-              <SmallButton onClick={handleJumpToPage}>Go</SmallButton>
-            )}
-          </InlineGroup>
-          <RangeValue>Page {currentPage} of {totalPages}</RangeValue>
-          {isJumping && <PageMessage>Loading page...</PageMessage>}
-        </ControlGroup>
+        <Button onClick={onApplyFilters}>
+          Apply Filters
+        </Button>
       </ControlPanelContainer>
     </>
   );

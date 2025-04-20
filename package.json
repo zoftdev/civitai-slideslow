@@ -1,7 +1,7 @@
 {
-  "name": "civitai-slideshow",
+  "name": "civitai-slideslow",
   "version": "0.1.0",
-  "homepage": "https://zoftdev.github.io/civitai-slideshow",
+  "homepage": "https://zoftdev.github.io/civitai-slideslow",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",

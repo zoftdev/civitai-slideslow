@@ -112,6 +112,54 @@ const FullscreenButton = styled.button`
   }
 `;
 
+const NextPageButton = styled.button`
+  position: fixed;
+  bottom: 20px;
+  left: calc(50% + 70px);
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  z-index: 100;
+  font-size: 14px;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const ResetPageButton = styled.button`
+  position: fixed;
+  bottom: 20px;
+  left: calc(50% - 70px);
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  z-index: 100;
+  font-size: 14px;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 // Fullscreen Enter/Exit Icons
 const EnterFullscreenIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -139,14 +187,13 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [slidesToShow, setSlidesToShow] = useState<number>(3);
-  const [currentPage, setCurrentPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [currentSlide, setCurrentSlide] = useState<number>(0);
   const [showToast, setShowToast] = useState<boolean>(false);
   const [isPanelVisible, setIsPanelVisible] = useState<boolean>(true);
-  const [totalPages, setTotalPages] = useState<number>(1000);
-  const [showJumpToast, setShowJumpToast] = useState<boolean>(false);
+  const [showNextToast, setShowNextToast] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   
   // Filter states with proper typing
   const [nsfw, setNsfw] = useState<boolean>(false);
@@ -181,7 +228,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     }
   }, [isPanelVisible, onPanelVisibilityChange]);
 
-  // Handle keyboard shortcut
+  // Handle keyboard shortcut and navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Check for Ctrl+Space shortcut
@@ -201,6 +248,30 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
         toastTimeoutRef.current = setTimeout(() => {
           setShowToast(false);
         }, 2000);
+        return;
+      }
+      
+      // Skip if slider not loaded or during loading states
+      if (!sliderRef.current || loading || loadingMore) return;
+      
+      // Handle arrow keys for navigation
+      switch (e.code) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          sliderRef.current.slickPrev();
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          sliderRef.current.slickNext();
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          sliderRef.current.slickPrev();
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          sliderRef.current.slickNext();
+          break;
       }
     };
     
@@ -212,7 +283,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
         clearTimeout(toastTimeoutRef.current);
       }
     };
-  }, [togglePanelVisibility]);
+  }, [togglePanelVisibility, loading, loadingMore]);
 
   // Adjust number of slides based on screen width
   useEffect(() => {
@@ -239,22 +310,22 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     };
   }, []);
 
-  const loadMedia = useCallback(async (page = 1, reset = false) => {
+  const loadMedia = useCallback(async (cursor: string | null = null, reset = false) => {
     try {
-      if (page === 1) {
+      if (!cursor) {
         setLoading(true);
       } else {
         setLoadingMore(true);
       }
 
-      const { media: newMedia, hasMore: moreAvailable, totalPages: pages } = await fetchCivitaiMedia({
-        limit: 100,
+      const { media: newMedia, hasMore: moreAvailable, nextCursor: newCursor } = await fetchCivitaiMedia({
+        limit: 30,
         nsfw: activeFilters.nsfw,
         mediaType: activeFilters.mediaType,
         searchTerm: activeFilters.searchTerm,
         sort: activeFilters.sort || undefined,
         period: activeFilters.period || undefined,
-        page
+        cursor: cursor || undefined
       });
 
       if (reset) {
@@ -264,8 +335,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
       }
 
       setHasMore(moreAvailable);
-      setCurrentPage(page);
-      setTotalPages(pages || 1000);
+      setNextCursor(newCursor);
       setError(null);
     } catch (err) {
       setError('Failed to load media from Civitai');
@@ -278,7 +348,19 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
 
   // Initial load
   useEffect(() => {
-    loadMedia(1, true);
+    loadMedia(null, true);
+    
+    // Show scroll instruction toast on initial load
+    setTimeout(() => {
+      setToastMessage('Scroll, swipe or use arrow keys to navigate');
+      setShowNextToast(true);
+      
+      // Clear after 4 seconds - longer to ensure users see it
+      toastTimeoutRef.current = setTimeout(() => {
+        setShowNextToast(false);
+      }, 4000);
+    }, 2000); // Delay to show after content loads
+    
   }, [loadMedia]);
 
   // Handle applying filters
@@ -292,71 +374,64 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     });
     
     // Reset everything and load with new filters
-    setCurrentPage(1);
     setMedia([]);
-    loadMedia(1, true);
+    setNextCursor(null);
+    loadMedia(null, true);
   }, [nsfw, mediaType, searchTerm, sort, period, loadMedia]);
 
   // Auto fetch more when nearing the end
   useEffect(() => {
-    // If we're within 30 slides of the end and we have more to load
+    // If we're within 10 slides of the end and we have more to load
     if (
       !loading && 
       !loadingMore && 
       hasMore && 
+      nextCursor &&
       media.length > 0 && 
       currentSlide > 0 && 
-      media.length - currentSlide < 30
+      media.length - currentSlide < 10
     ) {
-      loadMedia(currentPage + 1);
+      loadMedia(nextCursor);
     }
-  }, [currentSlide, media.length, loading, loadingMore, hasMore, currentPage, loadMedia]);
+  }, [currentSlide, media.length, loading, loadingMore, hasMore, nextCursor, loadMedia]);
 
-  // Handle jumping to a specific page
-  const handleJumpToPage = useCallback(async (page: number) => {
-    console.log(`handleJumpToPage called with page ${page}, current: ${currentPage}`);
-    
-    if (page === currentPage) {
-      console.log('Already on this page, skipping');
-      return;
-    }
-    
-    if (page < 1) {
-      console.log('Invalid page number, skipping');
+  // Handle loading next page
+  const handleLoadNextPage = useCallback(async () => {
+    if (!hasMore || !nextCursor || loading || loadingMore) {
       return;
     }
 
     // Show toast
-    setShowJumpToast(true);
+    setToastMessage('Loading next page');
+    setShowNextToast(true);
     if (toastTimeoutRef.current) {
       clearTimeout(toastTimeoutRef.current);
     }
     toastTimeoutRef.current = setTimeout(() => {
-      setShowJumpToast(false);
+      setShowNextToast(false);
     }, 2000);
 
     try {
-      console.log(`Loading page ${page}`);
-      // Reset media and load the requested page
+      console.log(`Loading next page with cursor: ${nextCursor}`);
+      // Reset media and load the next page
       setMedia([]);
       setCurrentSlide(0);
-      setCurrentPage(page); // Update current page immediately for UI feedback
       setLoading(true);
       
-      const { media: newMedia, hasMore: moreAvailable, totalPages: pages } = await fetchCivitaiMedia({
-        limit: 100,
+      const { media: newMedia, hasMore: moreAvailable, nextCursor: newCursor } = await fetchCivitaiMedia({
+        limit: 30,
         nsfw: activeFilters.nsfw,
         mediaType: activeFilters.mediaType,
         searchTerm: activeFilters.searchTerm,
         sort: activeFilters.sort || undefined,
         period: activeFilters.period || undefined,
-        page
+        cursor: nextCursor
       });
       
-      console.log(`Loaded ${newMedia.length} items for page ${page}`);
+      console.log(`Loaded ${newMedia.length} items for next page`);
       setMedia(newMedia);
       setHasMore(moreAvailable);
-      setTotalPages(pages || 1000);
+      setNextCursor(newCursor);
       
       // Reset to first slide after new media is loaded
       setTimeout(() => {
@@ -366,12 +441,65 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
       }, 50);
       
     } catch (err) {
-      setError('Failed to load page');
+      setError('Failed to load next page');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  }, [currentPage, activeFilters]);
+  }, [activeFilters, hasMore, loading, loadingMore, nextCursor]);
+
+  // Add this new function inside the Slideshow component:
+  const handleResetPage = useCallback(async () => {
+    if (loading || loadingMore) {
+      return;
+    }
+
+    // Show toast
+    setToastMessage('Resetting to first page');
+    setShowNextToast(true);
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setShowNextToast(false);
+    }, 2000);
+
+    try {
+      console.log('Resetting to first page');
+      // Reset media and load the first page
+      setMedia([]);
+      setCurrentSlide(0);
+      setLoading(true);
+      setNextCursor(null);
+      
+      const { media: newMedia, hasMore: moreAvailable, nextCursor: newCursor } = await fetchCivitaiMedia({
+        limit: 30,
+        nsfw: activeFilters.nsfw,
+        mediaType: activeFilters.mediaType,
+        searchTerm: activeFilters.searchTerm,
+        sort: activeFilters.sort || undefined,
+        period: activeFilters.period || undefined
+      });
+      
+      console.log(`Loaded ${newMedia.length} items for first page`);
+      setMedia(newMedia);
+      setHasMore(moreAvailable);
+      setNextCursor(newCursor);
+      
+      // Reset to first slide after new media is loaded
+      setTimeout(() => {
+        if (sliderRef.current) {
+          sliderRef.current.slickGoTo(0);
+        }
+      }, 50);
+      
+    } catch (err) {
+      setError('Failed to load first page');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeFilters, loading, loadingMore]);
 
   const sliderSettings = {
     dots: false,
@@ -419,6 +547,113 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     };
   }, []);
 
+  // Add mouse wheel and touchpad scrolling for navigation
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      // Prevent default to avoid page scrolling
+      e.preventDefault();
+      
+      // Skip if slider not loaded or during loading states
+      if (!sliderRef.current || loading || loadingMore) return;
+      
+      // Reduced threshold for more responsive scrolling
+      const threshold = 20;
+      
+      if (e.deltaY > threshold) {
+        // Scroll down - go to next slide
+        sliderRef.current.slickNext();
+      } else if (e.deltaY < -threshold) {
+        // Scroll up - go to previous slide
+        sliderRef.current.slickPrev();
+      }
+      
+      // For horizontal scrolling (e.g., touchpad gestures)
+      if (e.deltaX > threshold) {
+        // Scroll right - go to next slide
+        sliderRef.current.slickNext();
+      } else if (e.deltaX < -threshold) {
+        // Scroll left - go to previous slide
+        sliderRef.current.slickPrev();
+      }
+    };
+    
+    // Add passive: false to indicate we'll call preventDefault()
+    const slideContainer = slideContainerRef.current;
+    if (slideContainer) {
+      slideContainer.addEventListener('wheel', handleWheel, { passive: false });
+    }
+    
+    return () => {
+      if (slideContainer) {
+        slideContainer.removeEventListener('wheel', handleWheel);
+      }
+    };
+  }, [loading, loadingMore]);
+  
+  // Add touch swipe support for mobile
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!sliderRef.current || loading || loadingMore) return;
+      
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      
+      const diffX = touchStartX - touchEndX;
+      const diffY = touchStartY - touchEndY;
+      
+      // Reduced threshold for more responsive touch gestures
+      const threshold = 40;
+      
+      // Check if horizontal swipe is more significant than vertical
+      if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (Math.abs(diffX) > threshold) {
+          if (diffX > 0) {
+            // Swipe left - go to next slide
+            sliderRef.current.slickNext();
+          } else {
+            // Swipe right - go to previous slide
+            sliderRef.current.slickPrev();
+          }
+        }
+      } else {
+        // Vertical swipe handling
+        if (Math.abs(diffY) > threshold) {
+          if (diffY > 0) {
+            // Swipe up - go to next slide
+            sliderRef.current.slickNext();
+          } else {
+            // Swipe down - go to previous slide
+            sliderRef.current.slickPrev();
+          }
+        }
+      }
+    };
+    
+    const slideContainer = slideContainerRef.current;
+    if (slideContainer) {
+      slideContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+      slideContainer.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+    
+    return () => {
+      if (slideContainer) {
+        slideContainer.removeEventListener('touchstart', handleTouchStart);
+        slideContainer.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, [loading, loadingMore]);
+
+  // Update the ShortcutToast to handle both reset and next page messages:
+  const [toastMessage, setToastMessage] = useState<string>('');
+
   if (loading && media.length === 0) {
     return <LoadingContainer>Loading media from Civitai...</LoadingContainer>;
   }
@@ -449,9 +684,6 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
         onApplyFilters={handleApplyFilters}
         isVisible={isPanelVisible}
         toggleVisibility={togglePanelVisibility}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onJumpToPage={handleJumpToPage}
       />
 
       <SlideContainer ref={slideContainerRef}>
@@ -483,16 +715,32 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
       )}
       
       <StatusIndicator>
-        {currentSlide + 1} / {media.length} | Page: {currentPage} of {totalPages} | Delay: {delaySeconds}s
+        {currentSlide + 1} / {media.length} | Delay: {delaySeconds}s
       </StatusIndicator>
       
       <ShortcutToast className={showToast ? 'visible' : ''}>
         Panel {isPanelVisible ? 'shown' : 'hidden'}
       </ShortcutToast>
 
-      <ShortcutToast className={showJumpToast ? 'visible' : ''}>
-        Jumped to page {currentPage}
+      <ShortcutToast className={showNextToast ? 'visible' : ''}>
+        {toastMessage}
       </ShortcutToast>
+      
+      {hasMore && nextCursor && (
+        <NextPageButton 
+          onClick={handleLoadNextPage}
+          disabled={loading || loadingMore}
+        >
+          Next Page
+        </NextPageButton>
+      )}
+      
+      <ResetPageButton 
+        onClick={handleResetPage}
+        disabled={loading || loadingMore}
+      >
+        First Page
+      </ResetPageButton>
       
       <FullscreenButton onClick={toggleFullscreen}>
         {isFullscreen ? <ExitFullscreenIcon /> : <EnterFullscreenIcon />}
