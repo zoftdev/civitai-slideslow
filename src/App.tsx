@@ -1,25 +1,39 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useState } from 'react';
+import styled from 'styled-components';
+import Slideshow from './components/Slideshow';
+
+const AppContainer = styled.div`
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+`;
+
+const SlideshowContainer = styled.div<{ isPanelVisible: boolean }>`
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  padding-right: ${props => props.isPanelVisible ? '250px' : '0'};
+  transition: padding-right 0.3s ease;
+
+  @media (max-width: 768px) {
+    padding-right: 0;
+  }
+`;
 
 function App() {
+  const [isPanelVisible, setIsPanelVisible] = useState(true);
+
+  const handlePanelVisibilityChange = (isVisible: boolean) => {
+    setIsPanelVisible(isVisible);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <AppContainer>
+      <SlideshowContainer isPanelVisible={isPanelVisible}>
+        <Slideshow onPanelVisibilityChange={handlePanelVisibilityChange} />
+      </SlideshowContainer>
+    </AppContainer>
   );
 }
 

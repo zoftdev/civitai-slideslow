@@ -1,46 +1,64 @@
-# Getting Started with Create React App
+# Civitai Fullscreen Slideshow
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A web application that fetches images and videos from the Civitai API and displays them as a fullscreen slideshow that auto-scrolls every 5 seconds.
 
-## Available Scripts
+## Features
 
-In the project directory, you can run:
+- Fullscreen slideshow interface
+- Auto-scrolls every 5 seconds
+- Supports both images and videos from Civitai
+- Responsive design that works across different screen sizes
 
-### `npm start`
+## Getting Started
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Prerequisites
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- Node.js (v14 or later recommended)
+- npm or yarn
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone this repository
+```bash
+git clone https://github.com/yourusername/civitai-slideshow.git
+cd civitai-slideshow
+```
 
-### `npm run build`
+2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+3. Start the development server
+```bash
+npm start
+# or
+yarn start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+4. Open your browser and navigate to `http://localhost:3000`
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## How It Works
 
-### `npm run eject`
+The application uses:
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+- React for the UI components
+- axios for API requests to Civitai
+- react-slick for the slideshow functionality
+- styled-components for styling
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+The slideshow fetches media from the Civitai API and displays them in a fullscreen carousel that automatically transitions every 5 seconds.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## Configuration
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+You can adjust the slideshow settings in the `Slideshow.tsx` component:
 
-## Learn More
+- Change `autoplaySpeed` (in milliseconds) to adjust the scroll timing
+- Modify the `limit` parameter in `fetchCivitaiMedia` to change the number of media items to fetch
+- Set the `nsfw` parameter to filter content
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## License
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+MIT
