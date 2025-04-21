@@ -515,29 +515,115 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     afterChange: (current: number) => setCurrentSlide(current),
   };
 
-  // Toggle fullscreen
+  // Add a new state variable for wake lock
+  const [wakeLock, setWakeLock] = useState<WakeLockSentinel | null>(null);
+
+  // Modify the toggleFullscreen function to include wake lock functionality
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       // Enter fullscreen
       if (slideContainerRef.current?.requestFullscreen) {
         slideContainerRef.current.requestFullscreen()
-          .then(() => setIsFullscreen(true))
+          .then(() => {
+            setIsFullscreen(true);
+            
+            // Request wake lock to prevent display from turning off
+            if ('wakeLock' in navigator) {
+              navigator.wakeLock.request('screen')
+                .then((lock) => {
+                  setWakeLock(lock);
+                  console.log('Wake Lock activated');
+                  setToastMessage('Fullscreen mode (display will stay on)');
+                  setShowNextToast(true);
+                  
+                  // Clear toast after 3 seconds
+                  if (toastTimeoutRef.current) {
+                    clearTimeout(toastTimeoutRef.current);
+                  }
+                  toastTimeoutRef.current = setTimeout(() => {
+                    setShowNextToast(false);
+                  }, 3000);
+                })
+                .catch((err: Error) => {
+                  console.error(`Wake Lock error: ${err.message}`);
+                });
+            }
+          })
           .catch(err => console.error(`Error attempting to enable fullscreen: ${err.message}`));
       }
     } else {
       // Exit fullscreen
       if (document.exitFullscreen) {
         document.exitFullscreen()
-          .then(() => setIsFullscreen(false))
+          .then(() => {
+            setIsFullscreen(false);
+            
+            // Release wake lock when exiting fullscreen
+            if (wakeLock) {
+              wakeLock.release()
+                .then(() => {
+                  console.log('Wake Lock released');
+                  setWakeLock(null);
+                })
+                .catch((err: Error) => {
+                  console.error(`Wake Lock release error: ${err.message}`);
+                });
+            }
+          })
           .catch(err => console.error(`Error attempting to exit fullscreen: ${err.message}`));
       }
     }
-  }, []);
+  }, [wakeLock]);
+
+  // Add event listener for visibility change to handle when the tab loses focus
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isFullscreen && !wakeLock) {
+        // Re-acquire wake lock if tab regains visibility while in fullscreen
+        if ('wakeLock' in navigator) {
+          navigator.wakeLock.request('screen')
+            .then((lock) => {
+              setWakeLock(lock);
+              console.log('Wake Lock re-acquired');
+            })
+            .catch((err: Error) => {
+              console.error(`Wake Lock error: ${err.message}`);
+            });
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      
+      // Release wake lock when component unmounts
+      if (wakeLock) {
+        wakeLock.release().catch((err: Error) => {
+          console.error(`Wake Lock release error: ${err.message}`);
+        });
+      }
+    };
+  }, [isFullscreen, wakeLock]);
 
   // Update fullscreen state when fullscreen changes (e.g., Esc key)
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const newFullscreenState = !!document.fullscreenElement;
+      setIsFullscreen(newFullscreenState);
+      
+      // If exiting fullscreen via Esc key, release wake lock
+      if (!newFullscreenState && wakeLock) {
+        wakeLock.release()
+          .then(() => {
+            console.log('Wake Lock released (fullscreen exit)');
+            setWakeLock(null);
+          })
+          .catch((err: Error) => {
+            console.error(`Wake Lock release error: ${err.message}`);
+          });
+      }
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -545,7 +631,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     return () => {
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, []);
+  }, [wakeLock]);
 
   // Add mouse wheel and touchpad scrolling for navigation
   useEffect(() => {
@@ -653,6 +739,16 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
 
   // Update the ShortcutToast to handle both reset and next page messages:
   const [toastMessage, setToastMessage] = useState<string>('');
+
+  // Check for wake lock support on component mount
+  useEffect(() => {
+    const isWakeLockSupported = 'wakeLock' in navigator;
+    console.log(`Wake Lock API support: ${isWakeLockSupported ? 'YES' : 'NO'}`);
+    
+    if (!isWakeLockSupported) {
+      console.warn('This browser does not support the Wake Lock API. Display may turn off in fullscreen mode.');
+    }
+  }, []);
 
   if (loading && media.length === 0) {
     return <LoadingContainer>Loading media from Civitai...</LoadingContainer>;
