@@ -529,10 +529,11 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
             
             // Request wake lock to prevent display from turning off
             if ('wakeLock' in navigator) {
+              console.log('Requesting Wake Lock...');
               navigator.wakeLock.request('screen')
                 .then((lock) => {
                   setWakeLock(lock);
-                  console.log('Wake Lock activated');
+                  console.log('Wake Lock activated successfully');
                   setToastMessage('Fullscreen mode (display will stay on)');
                   setShowNextToast(true);
                   
@@ -545,8 +546,26 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
                   }, 3000);
                 })
                 .catch((err: Error) => {
-                  console.error(`Wake Lock error: ${err.message}`);
+                  console.error(`Wake Lock request failed: ${err.message}`);
+                  setToastMessage('Fullscreen mode (display may turn off)');
+                  setShowNextToast(true);
+                  if (toastTimeoutRef.current) {
+                    clearTimeout(toastTimeoutRef.current);
+                  }
+                  toastTimeoutRef.current = setTimeout(() => {
+                    setShowNextToast(false);
+                  }, 3000);
                 });
+            } else {
+              console.log('Wake Lock API not available when entering fullscreen');
+              setToastMessage('Fullscreen mode (display may turn off)');
+              setShowNextToast(true);
+              if (toastTimeoutRef.current) {
+                clearTimeout(toastTimeoutRef.current);
+              }
+              toastTimeoutRef.current = setTimeout(() => {
+                setShowNextToast(false);
+              }, 3000);
             }
           })
           .catch(err => console.error(`Error attempting to enable fullscreen: ${err.message}`));
@@ -560,9 +579,10 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
             
             // Release wake lock when exiting fullscreen
             if (wakeLock) {
+              console.log('Releasing Wake Lock...');
               wakeLock.release()
                 .then(() => {
-                  console.log('Wake Lock released');
+                  console.log('Wake Lock released successfully');
                   setWakeLock(null);
                 })
                 .catch((err: Error) => {
@@ -578,16 +598,19 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
   // Add event listener for visibility change to handle when the tab loses focus
   useEffect(() => {
     const handleVisibilityChange = () => {
+      console.log(`Visibility changed: ${document.visibilityState}, isFullscreen: ${isFullscreen}, hasWakeLock: ${!!wakeLock}`);
+      
       if (document.visibilityState === 'visible' && isFullscreen && !wakeLock) {
         // Re-acquire wake lock if tab regains visibility while in fullscreen
         if ('wakeLock' in navigator) {
+          console.log('Attempting to re-acquire Wake Lock after visibility change');
           navigator.wakeLock.request('screen')
             .then((lock) => {
               setWakeLock(lock);
-              console.log('Wake Lock re-acquired');
+              console.log('Wake Lock successfully re-acquired');
             })
             .catch((err: Error) => {
-              console.error(`Wake Lock error: ${err.message}`);
+              console.error(`Failed to re-acquire Wake Lock: ${err.message}`);
             });
         }
       }
@@ -600,8 +623,9 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
       
       // Release wake lock when component unmounts
       if (wakeLock) {
+        console.log('Component unmounting, releasing Wake Lock');
         wakeLock.release().catch((err: Error) => {
-          console.error(`Wake Lock release error: ${err.message}`);
+          console.error(`Wake Lock release error on unmount: ${err.message}`);
         });
       }
     };
