@@ -24,9 +24,9 @@ interface ToggleButtonProps {
 
 const ToggleButton = styled.button<ToggleButtonProps>`
   position: fixed;
-  top: 10px;
-  right: ${props => props.isVisible ? '260px' : '10px'};
-  background-color: rgba(0, 0, 0, 0.8);
+  top: 20px;
+  left: 20px;
+  background-color: rgba(0, 0, 0, 0.7);
   color: white;
   border: none;
   border-radius: 4px;
@@ -36,17 +36,15 @@ const ToggleButton = styled.button<ToggleButtonProps>`
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 101;
-  transition: right 0.3s ease;
+  z-index: 100;
   
   &:hover {
     background-color: rgba(0, 0, 0, 0.9);
   }
-
+  
   svg {
-    width: 20px;
-    height: 20px;
-    fill: white;
+    width: 24px;
+    height: 24px;
   }
 `;
 
@@ -185,15 +183,18 @@ const Separator = styled.div`
 `;
 
 // SVG icons
-const IconOpen = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-    <path d="M10.59 4.59C10.21 4.21 9.7 4 9.17 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-1.41-1.41z"/>
+const IconClose = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
   </svg>
 );
 
-const IconClose = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+const IconOpen = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="12" x2="21" y2="12"></line>
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="18" x2="21" y2="18"></line>
   </svg>
 );
 

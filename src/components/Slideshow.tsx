@@ -15,12 +15,27 @@ const SlideContainer = styled.div`
   background-color: #000;
 `;
 
+const MediaControls = styled.div`
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 50;
+`;
+
 const MediaContainer = styled.div`
   height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
+  padding: 5px;
+  position: relative;
+  
+  &:hover ${MediaControls} {
+    opacity: 1;
+  }
 `;
 
 const Image = styled.img`
@@ -170,6 +185,153 @@ const EnterFullscreenIcon = () => (
 const ExitFullscreenIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+  </svg>
+);
+
+// Add a PlayPauseButton styled component
+const PlayPauseButton = styled.button`
+  position: fixed;
+  bottom: 20px;
+  right: 70px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+// Add play/pause icons
+const PlayIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+  </svg>
+);
+
+const PauseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="6" y1="4" x2="6" y2="20"></line>
+    <line x1="18" y1="4" x2="18" y2="20"></line>
+  </svg>
+);
+
+// Add styled components for hover controls
+const ControlButton = styled.button`
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const InfoPanel = styled.div`
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(0, 0, 0, 0.9);
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  z-index: 200;
+  max-width: 80%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+`;
+
+const InfoHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  
+  h3 {
+    margin: 0;
+    font-size: 18px;
+  }
+`;
+
+const CloseButton = styled.button`
+  background-color: rgba(255, 255, 255, 0.2);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+const InfoContent = styled.div`
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px;
+  font-size: 14px;
+  
+  dt {
+    font-weight: bold;
+    text-align: right;
+  }
+  
+  dd {
+    margin: 0;
+    overflow-wrap: break-word;
+  }
+`;
+
+// Add info icons
+const InfoIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <line x1="12" y1="16" x2="12" y2="12"></line>
+    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
   </svg>
 );
 
@@ -501,13 +663,31 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     }
   }, [activeFilters, loading, loadingMore]);
 
+  // Add isPaused state in the component
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+
+  // Add togglePlayPause function
+  const togglePlayPause = useCallback(() => {
+    setIsPaused(prev => !prev);
+    setToastMessage(`Slideshow ${!isPaused ? 'paused' : 'playing'}`);
+    setShowNextToast(true);
+    
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    toastTimeoutRef.current = setTimeout(() => {
+      setShowNextToast(false);
+    }, 2000);
+  }, [isPaused]);
+
+  // Modify slider settings to respect the paused state
   const sliderSettings = {
     dots: false,
     infinite: media.length > slidesToShow,
     speed: 500,
     slidesToShow: slidesToShow,
     slidesToScroll: 1,
-    autoplay: true,
+    autoplay: !isPaused,
     autoplaySpeed: delaySeconds * 1000, // Convert seconds to milliseconds
     pauseOnHover: false,
     arrows: false,
@@ -774,6 +954,34 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
     }
   }, []);
 
+  // Inside the Slideshow component, add these new states
+  const [showInfoPanel, setShowInfoPanel] = useState<boolean>(false);
+  const [currentImageInfo, setCurrentImageInfo] = useState<CivitaiMedia | null>(null);
+  const [wasPaused, setWasPaused] = useState<boolean>(false);
+
+  // Add handlers for the buttons
+  const handleInfoClick = useCallback((item: CivitaiMedia) => {
+    // Store current pause state
+    setWasPaused(isPaused);
+    
+    // Pause slideshow while showing info
+    if (!isPaused) {
+      setIsPaused(true);
+    }
+    
+    setCurrentImageInfo(item);
+    setShowInfoPanel(true);
+  }, [isPaused]);
+
+  const handleCloseInfo = useCallback(() => {
+    setShowInfoPanel(false);
+    
+    // Restore previous pause state
+    if (!wasPaused) {
+      setIsPaused(false);
+    }
+  }, [wasPaused]);
+
   if (loading && media.length === 0) {
     return <LoadingContainer>Loading media from Civitai...</LoadingContainer>;
   }
@@ -825,6 +1033,17 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
                   loading="lazy"
                 />
               )}
+              <MediaControls>
+                <ControlButton 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleInfoClick(item);
+                  }}
+                  title="Info"
+                >
+                  <InfoIcon />
+                </ControlButton>
+              </MediaControls>
             </MediaContainer>
           ))}
         </Slider>
@@ -862,9 +1081,60 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
         First Page
       </ResetPageButton>
       
+      <PlayPauseButton onClick={togglePlayPause}>
+        {isPaused ? <PlayIcon /> : <PauseIcon />}
+      </PlayPauseButton>
+      
       <FullscreenButton onClick={toggleFullscreen}>
         {isFullscreen ? <ExitFullscreenIcon /> : <EnterFullscreenIcon />}
       </FullscreenButton>
+
+      {showInfoPanel && currentImageInfo && (
+        <InfoPanel>
+          <InfoHeader>
+            <h3>Media Information</h3>
+            <CloseButton onClick={handleCloseInfo}>
+              <CloseIcon />
+            </CloseButton>
+          </InfoHeader>
+          <InfoContent>
+            <dt>ID:</dt>
+            <dd>{currentImageInfo.id}</dd>
+            <dt>Type:</dt>
+            <dd>{currentImageInfo.type}</dd>
+            <dt>URL:</dt>
+            <dd>
+              <a href={currentImageInfo.url} target="_blank" rel="noopener noreferrer" style={{color: 'lightblue'}}>
+                Open Original
+              </a>
+            </dd>
+            {currentImageInfo.width && (
+              <>
+                <dt>Width:</dt>
+                <dd>{currentImageInfo.width}px</dd>
+              </>
+            )}
+            {currentImageInfo.height && (
+              <>
+                <dt>Height:</dt>
+                <dd>{currentImageInfo.height}px</dd>
+              </>
+            )}
+            {currentImageInfo.nsfw !== undefined && (
+              <>
+                <dt>NSFW:</dt>
+                <dd>{currentImageInfo.nsfw ? 'Yes' : 'No'}</dd>
+              </>
+            )}
+            {currentImageInfo.meta && Object.entries(currentImageInfo.meta).map(([key, value]) => (
+              <React.Fragment key={key}>
+                <dt>{key}:</dt>
+                <dd>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd>
+              </React.Fragment>
+            ))}
+          </InfoContent>
+        </InfoPanel>
+      )}
     </>
   );
 };
