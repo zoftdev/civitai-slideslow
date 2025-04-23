@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/civitai-slideslow/static/css/main.48ac9472.css",
-    "main.js": "/civitai-slideslow/static/js/main.3ed505e0.js",
+    "main.js": "/civitai-slideslow/static/js/main.57fd02a7.js",
     "static/js/453.c1cc23ce.chunk.js": "/civitai-slideslow/static/js/453.c1cc23ce.chunk.js",
     "static/media/slick.svg": "/civitai-slideslow/static/media/slick.2630a3e3eab21c607e21.svg",
     "static/media/slick.eot": "/civitai-slideslow/static/media/slick.a4e97f5a2a64f0ab1323.eot",
@@ -9,11 +9,11 @@
     "static/media/slick.woff": "/civitai-slideslow/static/media/slick.295183786cd8a1389865.woff",
     "index.html": "/civitai-slideslow/index.html",
     "main.48ac9472.css.map": "/civitai-slideslow/static/css/main.48ac9472.css.map",
-    "main.3ed505e0.js.map": "/civitai-slideslow/static/js/main.3ed505e0.js.map",
+    "main.57fd02a7.js.map": "/civitai-slideslow/static/js/main.57fd02a7.js.map",
     "453.c1cc23ce.chunk.js.map": "/civitai-slideslow/static/js/453.c1cc23ce.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.48ac9472.css",
-    "static/js/main.3ed505e0.js"
+    "static/js/main.57fd02a7.js"
   ]
 }
