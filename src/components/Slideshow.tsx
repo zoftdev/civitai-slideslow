@@ -17,7 +17,7 @@ const SlideContainer = styled.div`
 
 const MediaControls = styled.div`
   position: absolute;
-  bottom: 10px;
+  top: 10px;
   right: 10px;
   display: flex;
   opacity: 0;
@@ -253,18 +253,28 @@ const ControlButton = styled.button`
 
 const InfoPanel = styled.div`
   position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: rgba(0, 0, 0, 0.9);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
+  z-index: 200;
+  overflow-y: auto;
+`;
+
+const InfoPanelContent = styled.div`
+  background-color: rgba(0, 0, 0, 0.9);
   padding: 20px;
   border-radius: 8px;
-  z-index: 200;
   max-width: 80%;
   max-height: 80vh;
   overflow-y: auto;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  position: relative;
 `;
 
 const InfoHeader = styled.div`
@@ -280,25 +290,29 @@ const InfoHeader = styled.div`
 `;
 
 const CloseButton = styled.button`
+  position: absolute;
+  top: 10px;
+  right: 10px;
   background-color: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   cursor: pointer;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 10;
   
   &:hover {
     background-color: rgba(255, 255, 255, 0.4);
   }
   
   svg {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
 `;
 
@@ -377,6 +391,7 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
   const sliderRef = useRef<Slider | null>(null);
   const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const slideContainerRef = useRef<HTMLDivElement>(null);
+  const wasPausedRef = useRef<boolean>(false);
   
   // Define togglePanelVisibility before it's used
   const togglePanelVisibility = useCallback(() => {
@@ -393,6 +408,12 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
   // Handle keyboard shortcut and navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Check if the event target is an input or textarea element
+      const target = e.target as HTMLElement;
+      const isInputField = target.tagName === 'INPUT' || 
+                           target.tagName === 'TEXTAREA' || 
+                           target.isContentEditable;
+      
       // Check for Ctrl+Space shortcut
       if (e.ctrlKey && e.code === 'Space') {
         e.preventDefault();
@@ -411,6 +432,11 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
           setShowToast(false);
         }, 2000);
         return;
+      }
+      
+      // Skip if user is typing in an input field
+      if (isInputField) {
+        return; // Allow default input field navigation
       }
       
       // Skip if slider not loaded or during loading states
@@ -957,30 +983,22 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
   // Inside the Slideshow component, add these new states
   const [showInfoPanel, setShowInfoPanel] = useState<boolean>(false);
   const [currentImageInfo, setCurrentImageInfo] = useState<CivitaiMedia | null>(null);
-  const [wasPaused, setWasPaused] = useState<boolean>(false);
 
   // Add handlers for the buttons
   const handleInfoClick = useCallback((item: CivitaiMedia) => {
-    // Store current pause state
-    setWasPaused(isPaused);
-    
-    // Pause slideshow while showing info
-    if (!isPaused) {
-      setIsPaused(true);
-    }
+    // No longer storing or changing pause state
+    console.log('Info panel opened');
     
     setCurrentImageInfo(item);
     setShowInfoPanel(true);
-  }, [isPaused]);
+  }, []);
 
   const handleCloseInfo = useCallback(() => {
+    console.log('Info panel closed');
     setShowInfoPanel(false);
     
-    // Restore previous pause state
-    if (!wasPaused) {
-      setIsPaused(false);
-    }
-  }, [wasPaused]);
+    // No longer restoring pause state
+  }, []);
 
   if (loading && media.length === 0) {
     return <LoadingContainer>Loading media from Civitai...</LoadingContainer>;
@@ -1090,49 +1108,51 @@ const Slideshow: React.FC<SlideshowProps> = ({ onPanelVisibilityChange }) => {
       </FullscreenButton>
 
       {showInfoPanel && currentImageInfo && (
-        <InfoPanel>
-          <InfoHeader>
-            <h3>Media Information</h3>
-            <CloseButton onClick={handleCloseInfo}>
-              <CloseIcon />
-            </CloseButton>
-          </InfoHeader>
-          <InfoContent>
-            <dt>ID:</dt>
-            <dd>{currentImageInfo.id}</dd>
-            <dt>Type:</dt>
-            <dd>{currentImageInfo.type}</dd>
-            <dt>URL:</dt>
-            <dd>
-              <a href={currentImageInfo.url} target="_blank" rel="noopener noreferrer" style={{color: 'lightblue'}}>
-                Open Original
-              </a>
-            </dd>
-            {currentImageInfo.width && (
-              <>
-                <dt>Width:</dt>
-                <dd>{currentImageInfo.width}px</dd>
-              </>
-            )}
-            {currentImageInfo.height && (
-              <>
-                <dt>Height:</dt>
-                <dd>{currentImageInfo.height}px</dd>
-              </>
-            )}
-            {currentImageInfo.nsfw !== undefined && (
-              <>
-                <dt>NSFW:</dt>
-                <dd>{currentImageInfo.nsfw ? 'Yes' : 'No'}</dd>
-              </>
-            )}
-            {currentImageInfo.meta && Object.entries(currentImageInfo.meta).map(([key, value]) => (
-              <React.Fragment key={key}>
-                <dt>{key}:</dt>
-                <dd>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd>
-              </React.Fragment>
-            ))}
-          </InfoContent>
+        <InfoPanel onClick={handleCloseInfo}>
+          <InfoPanelContent onClick={(e) => e.stopPropagation()}>
+            <InfoHeader>
+              <h3>Media Information</h3>
+              <CloseButton onClick={handleCloseInfo}>
+                <CloseIcon />
+              </CloseButton>
+            </InfoHeader>
+            <InfoContent>
+              <dt>ID:</dt>
+              <dd>{currentImageInfo.id}</dd>
+              <dt>Type:</dt>
+              <dd>{currentImageInfo.type}</dd>
+              <dt>URL:</dt>
+              <dd>
+                <a href={currentImageInfo.url} target="_blank" rel="noopener noreferrer" style={{color: 'lightblue'}}>
+                  Open Original
+                </a>
+              </dd>
+              {currentImageInfo.width && (
+                <>
+                  <dt>Width:</dt>
+                  <dd>{currentImageInfo.width}px</dd>
+                </>
+              )}
+              {currentImageInfo.height && (
+                <>
+                  <dt>Height:</dt>
+                  <dd>{currentImageInfo.height}px</dd>
+                </>
+              )}
+              {currentImageInfo.nsfw !== undefined && (
+                <>
+                  <dt>NSFW:</dt>
+                  <dd>{currentImageInfo.nsfw ? 'Yes' : 'No'}</dd>
+                </>
+              )}
+              {currentImageInfo.meta && Object.entries(currentImageInfo.meta).map(([key, value]) => (
+                <React.Fragment key={key}>
+                  <dt>{key}:</dt>
+                  <dd>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</dd>
+                </React.Fragment>
+              ))}
+            </InfoContent>
+          </InfoPanelContent>
         </InfoPanel>
       )}
     </>
